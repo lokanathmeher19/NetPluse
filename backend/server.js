@@ -49,7 +49,7 @@ app.get('/download', (req, res) => {
     const chunkSize = 1024 * 64; // 64K chunks
     const dummyBuffer = Buffer.alloc(chunkSize, '0'); // Sending zeros is fine, network doesn't compress automatically here as we don't use compression middleware
 
-    const maxDuration = 15000; // 15 second maximum timeout as a safety fallback
+    const maxDuration = 35000; // 35 second maximum timeout as a safety fallback
     const startTime = Date.now();
 
     const streamData = () => {

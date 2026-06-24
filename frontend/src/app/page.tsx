@@ -464,7 +464,7 @@ export default function Home() {
 
       workerRef.current.postMessage({
         type: 'START_DOWNLOAD',
-        payload: { host: HOST, connections, duration: 10000 }
+        payload: { host: HOST, connections, duration: 30000 }
       });
     });
   };
@@ -499,7 +499,7 @@ export default function Home() {
 
       workerRef.current.postMessage({
         type: 'START_UPLOAD',
-        payload: { host: HOST, connections, duration: 10000 }
+        payload: { host: HOST, connections, duration: 30000 }
       });
     });
   };
