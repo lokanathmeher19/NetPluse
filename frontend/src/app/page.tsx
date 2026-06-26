@@ -730,11 +730,13 @@ export default function Home() {
               </div>
               <div className="info-text">
                 <div className="info-label-group">
-                  <span className="info-label">Client</span>
+                  <span className="info-label">Your Provider</span>
                   <button className="gps-btn" onClick={handleRequestGPS}>📍 USE GPS</button>
                 </div>
-                <span className="info-value">{clientInfo.ip}</span>
-                <span className="info-sub">{clientInfo.isp}</span>
+                <span className="info-value" style={{ textTransform: 'capitalize', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '250px', display: 'inline-block', lineHeight: 1.2 }}>
+                  {clientInfo.isp.toLowerCase()}
+                </span>
+                <span className="info-sub">{clientInfo.city}</span>
               </div>
             </div>
 
@@ -759,21 +761,7 @@ export default function Home() {
 
           </div>
 
-          {/* Hardware Telemetry Sniffer Row */}
-          <div className="telemetry-row">
-            <div className="telemetry-item">
-              <span className="telemetry-label">Network Interface</span>
-              <span className="telemetry-value">{telemetry.connection}</span>
-            </div>
-            <div className="telemetry-item">
-              <span className="telemetry-label">Local Hardware IP</span>
-              <span className="telemetry-value">{telemetry.localIp}</span>
-            </div>
-            <div className="telemetry-item">
-              <span className="telemetry-label">Available Thread Concurrency</span>
-              <span className="telemetry-value">{telemetry.cores}</span>
-            </div>
-          </div>
+          {/* Removed hardware telemetry row to simplify UI for end-users */}
 
           {/* Live Server Radar Sweep mapping */}
           {activeServer && (
