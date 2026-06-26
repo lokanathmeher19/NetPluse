@@ -247,7 +247,7 @@ export default function Home() {
             try {
               // Pre-ping check to find fastest node
               await fetch(`${HOST}/ping`, { cache: 'no-store' });
-              const pingTime = performance.now() - start;
+              const pingTime = Math.round(performance.now() - start);
               if (pingTime < bestPing) {
                 bestPing = pingTime;
                 bestServer = server;
@@ -367,14 +367,14 @@ export default function Home() {
       for (let i = 0; i < pingIterations; i++) {
         const start = performance.now();
         await fetch(`${HOST}/ping`, { cache: 'no-store' });
-        const took = performance.now() - start;
+        const took = Math.round(performance.now() - start);
 
         totalPing += took;
 
         setCurrentValue(took);
         setPing(took);
         setChartData(prev => [...prev.slice(-20), { time: Date.now(), speed: took }]);
-        setTerminalPackets(prev => [...prev.slice(-49), { id: Math.random(), timestamp: Date.now(), message: `Ping reply from node - ${Math.round(took)}ms`, phase: 'ping' }]);
+        setTerminalPackets(prev => [...prev.slice(-49), { id: Math.random(), timestamp: Date.now(), message: `Ping reply from node - ${took}ms`, phase: 'ping' }]);
         await new Promise(r => setTimeout(r, 100)); // gap between pings
       }
       const finalPing = Math.round(totalPing / pingIterations);
@@ -441,6 +441,7 @@ export default function Home() {
           setDataTransferred(prev => prev + delta);
           setCurrentValue(speedMbps);
           setDownloadSpeed(speedMbps);
+          finalResultsRef.current.download = speedMbps;
           setMaxValue(prevMax => speedMbps > prevMax * 0.8 && prevMax < 10000 ? prevMax * 1.5 : prevMax);
           setChartData(prev => [...prev.slice(-30), { time: Date.now(), speed: speedMbps }]);
         } else if (type === 'DONE') {
@@ -476,6 +477,7 @@ export default function Home() {
           setDataTransferred(prev => prev + delta);
           setCurrentValue(speedMbps);
           setUploadSpeed(speedMbps);
+          finalResultsRef.current.upload = speedMbps;
           setMaxValue(prevMax => speedMbps > prevMax * 0.8 && prevMax < 10000 ? prevMax * 1.5 : prevMax);
           setChartData(prev => [...prev.slice(-30), { time: Date.now(), speed: speedMbps }]);
         } else if (type === 'DONE') {
