@@ -101,7 +101,7 @@ export default function Home() {
   const [activeServer, setActiveServer] = useState<ServerNode | null>(null);
 
   // Use environment variables for API URL, fallback to localhost for development
-  const HOST = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+  const HOST = process.env.NEXT_PUBLIC_API_URL || 'https://netpluse.onrender.com';
 
   const handleRequestGPS = () => {
     if ("geolocation" in navigator) {
@@ -620,28 +620,10 @@ export default function Home() {
         {/* Speedometer Gauge & Live Chart Component */}
         <div className="speedometer-container">
           <Speedometer value={currentValue} maxValue={maxValue} phase={status} />
-          {status !== 'idle' && status !== 'done' && (
-            <div className="chart-container">
-              <LiveChart data={chartData} color={chartColor} />
-            </div>
-          )}
 
 
-          {/* Live Terminal Packet Stream */}
-          {status !== 'idle' && (
-            <div className="terminal-container">
-              <div className="terminal-header">LIVE PACKET STREAM</div>
-              <div className="terminal-body" ref={terminalRef}>
-                {terminalPackets.map(p => (
-                  <div key={p.id} className="terminal-line">
-                    <span className={`term-phase ${p.phase}`}>[{p.phase.toUpperCase()}]</span>
-                    <span className="term-time">[{new Date(p.timestamp).toISOString().split('T')[1].slice(0, 11)}]</span>
-                    <span className="term-msg">{p.message}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+
+
         </div>
 
         {/* Action Button */}

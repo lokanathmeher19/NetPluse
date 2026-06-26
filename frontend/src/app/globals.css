@@ -225,10 +225,18 @@ h4 {
   transform: translateY(0px);
 }
 
+@keyframes testing-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(122, 200, 255, 0.6); }
+  70% { box-shadow: 0 0 0 20px rgba(122, 200, 255, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(122, 200, 255, 0); }
+}
+
 .action-btn:disabled {
-  opacity: 0.6;
+  opacity: 1; /* Keep bright and highlighted */
   cursor: not-allowed;
-  transform: none;
+  transform: scale(1.02); /* Slightly popped out */
+  animation: testing-pulse 1.5s infinite;
+  border: 2px solid rgba(255, 255, 255, 0.5);
 }
 
 /* Bottom Metric Cards Container */

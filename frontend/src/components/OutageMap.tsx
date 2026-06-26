@@ -18,7 +18,7 @@ const OutageMap = () => {
     const [loading, setLoading] = useState(true);
 
     // Use environment variables for API URL, fallback to localhost for development
-    const HOST = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+    const HOST = process.env.NEXT_PUBLIC_API_URL || 'https://netpluse.onrender.com';
 
     useEffect(() => {
         // Fix leaflet default icon issue in Next.js
