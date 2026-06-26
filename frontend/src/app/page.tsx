@@ -412,7 +412,8 @@ export default function Home() {
       });
 
       setStatus('done');
-      setCurrentValue(0);
+      // Set the final dial value to the calculated average download speed instead of resetting it to zero
+      setCurrentValue(parseFloat(finalResultsRef.current.download.toFixed(1)) || 0);
 
     } catch {
       setStatus('idle');
@@ -624,15 +625,7 @@ export default function Home() {
               <LiveChart data={chartData} color={chartColor} />
             </div>
           )}
-          {status === 'idle' && idleChartData.length > 0 && (
-            <div className="chart-container heartbeat-container">
-              <div className="heartbeat-label">
-                <span className="heartbeat-dot"></span>
-                Live Network Heartbeat
-              </div>
-              <LiveChart data={idleChartData} color="var(--accent-blue)" />
-            </div>
-          )}
+
 
           {/* Live Terminal Packet Stream */}
           {status !== 'idle' && (
