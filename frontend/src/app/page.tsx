@@ -148,16 +148,13 @@ export default function Home() {
         // Find the first successful response as quickly as possible, avoiding the full 3000ms wait if one is slow.
         // We use Promise.any to return the first successful result immediately.
         const geoData = await Promise.any([
-          fetchWithTimeout('http://ip-api.com/json/').then((data) => {
-            if (data.status !== 'success') throw new Error('ip-api fail');
-            return { ip: data.query || 'Unknown IP', isp: data.isp || 'Unknown ISP', city: `${data.city}, ${data.regionName}`, lat: data.lat || 0, lon: data.lon || 0 };
+          fetchWithTimeout('https://get.geojs.io/v1/ip/geo.json').then((data) => {
+            if (!data.latitude) throw new Error('geojs fail');
+            return { ip: data.ip || 'Unknown IP', isp: data.organization_name || 'Unknown ISP', city: `${data.city}, ${data.region}`, lat: Number(data.latitude) || 0, lon: Number(data.longitude) || 0 };
           }),
-          fetchWithTimeout('https://ipapi.co/json/').then((data) => ({
-            ip: data.ip || 'Unknown IP', isp: data.org || 'Unknown ISP', city: `${data.city || 'Unknown'}, ${data.region_code || ''}`, lat: data.latitude || 0, lon: data.longitude || 0
-          })),
-          fetchWithTimeout('https://ipinfo.io/json').then((data) => {
-            const [lat, lon] = (data.loc || '0,0').split(',').map(Number);
-            return { ip: data.ip || 'Unknown IP', isp: data.org || 'Unknown ISP', city: `${data.city}, ${data.region}`, lat: lat || 0, lon: lon || 0 };
+          fetchWithTimeout('https://ipapi.co/json/').then((data) => {
+            if (!data.latitude) throw new Error('ipapi fail');
+            return { ip: data.ip || 'Unknown IP', isp: data.org || 'Unknown ISP', city: `${data.city || 'Unknown'}, ${data.region_code || ''}`, lat: data.latitude || 0, lon: data.longitude || 0 };
           })
         ]);
 
