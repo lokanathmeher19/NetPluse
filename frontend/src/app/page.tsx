@@ -2,13 +2,12 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Wifi, RefreshCw, ArrowDown, ArrowUp, ArrowLeftRight, User, Server, Layout, ChevronDown, MapPin, Check, Share2, Activity, Globe, Moon, Sun, MonitorPlay, Gamepad2, UploadCloud, CheckCircle, XCircle } from 'lucide-react';
-import Speedometer from '../components/Speedometer';
-import LiveChart from '../components/LiveChart';
-import ParticleEngine from '../components/ParticleEngine';
 import dynamic from 'next/dynamic';
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import html2canvas from 'html2canvas';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+
+const Speedometer = dynamic(() => import('../components/Speedometer'), { ssr: false });
+const LiveChart = dynamic(() => import('../components/LiveChart'), { ssr: false });
+const ParticleEngine = dynamic(() => import('../components/ParticleEngine'), { ssr: false });
 
 // Dynamically import RadarMap to strictly bypass SSR (Leaflet relies heavily on the 'window' object)
 const RadarMap = dynamic(() => import('../components/RadarMap'), { ssr: false });
@@ -146,7 +145,9 @@ export default function Home() {
       try {
         // Fire all requests concurrently for speed, but use allSettled to pick results in a STRICT deterministic order.
         // This prevents the map from "jumping" to different coordinates on every page reload depending on which API resolved first.
-        const results = await Promise.allSettled([
+        // Find the first successful response as quickly as possible, avoiding the full 3000ms wait if one is slow.
+        // We use Promise.any to return the first successful result immediately.
+        const geoData = await Promise.any([
           fetchWithTimeout('http://ip-api.com/json/').then((data) => {
             if (data.status !== 'success') throw new Error('ip-api fail');
             return { ip: data.query || 'Unknown IP', isp: data.isp || 'Unknown ISP', city: `${data.city}, ${data.regionName}`, lat: data.lat || 0, lon: data.lon || 0 };
@@ -159,15 +160,6 @@ export default function Home() {
             return { ip: data.ip || 'Unknown IP', isp: data.org || 'Unknown ISP', city: `${data.city}, ${data.region}`, lat: lat || 0, lon: lon || 0 };
           })
         ]);
-
-        // Find the first successful response strictly in the array order (API 1 > API 2 > API 3)
-        let geoData = null;
-        for (const res of results) {
-          if (res.status === 'fulfilled' && res.value) {
-            geoData = res.value;
-            break;
-          }
-        }
 
         if (!geoData) throw new Error("All APIs failed");
         setClientInfo(geoData);
@@ -519,6 +511,7 @@ export default function Home() {
 
     try {
       // 1. Generate Image from the DOM
+      const html2canvas = (await import('html2canvas')).default;
       const canvas = await html2canvas(dashboard, {
         backgroundColor: '#070e1a',
         scale: 2 // High Resolution

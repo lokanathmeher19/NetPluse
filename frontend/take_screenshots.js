@@ -8,7 +8,7 @@ const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
     const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } });
     const screenshotsDir = path.resolve('../screenshots');
 
-    await page.goto('http://localhost:3001');
+    await page.goto('http://localhost:3000');
 
     // Wait for the animation and initial render
     await wait(2000);
