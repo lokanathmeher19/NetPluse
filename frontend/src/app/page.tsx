@@ -17,6 +17,7 @@ export interface HistoryRecord {
   upload: number;
   server: string;
   isp: string;
+  bufferbloatGrade?: string;
 }
 
 export default function Home() {
@@ -30,6 +31,8 @@ export default function Home() {
   const [ping, setPing] = useState<number>(0);
   const [downloadSpeed, setDownloadSpeed] = useState<number>(0);
   const [uploadSpeed, setUploadSpeed] = useState<number>(0);
+  const [bufferbloatGrade, setBufferbloatGrade] = useState<string | null>(null);
+
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [dataTransferred, setDataTransferred] = useState<number>(0);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -366,6 +369,7 @@ export default function Home() {
     setTestDuration(0);
     setLoadedDownloadPing(null);
     setLoadedUploadPing(null);
+    setBufferbloatGrade(null);
     setTerminalPackets([{ id: Date.now(), timestamp: Date.now(), message: 'Initiating NetPulse telemetry sequence...', phase: 'init' }]);
 
     const testStartTime = performance.now();
@@ -435,6 +439,24 @@ export default function Home() {
       await new Promise(r => setTimeout(r, 500)); // Visual pause
       await measureUpload();
 
+      // CALCULATE BUFFERBLOAT GRADE
+      let grade = 'N/A';
+      if (idlePing > 0 && loadedDownloadPing !== null && loadedUploadPing !== null) {
+          const downloadSpike = Math.max(0, loadedDownloadPing - idlePing);
+          const uploadSpike = Math.max(0, loadedUploadPing - idlePing);
+          const maxSpike = Math.max(downloadSpike, uploadSpike);
+          
+          if (maxSpike <= 5) grade = 'A+';
+          else if (maxSpike <= 15) grade = 'A';
+          else if (maxSpike <= 30) grade = 'B';
+          else if (maxSpike <= 60) grade = 'C';
+          else if (maxSpike <= 150) grade = 'D';
+          else grade = 'F';
+          
+          setBufferbloatGrade(grade);
+          setTerminalPackets(prev => [...prev.slice(-49), { id: Math.random(), timestamp: Date.now(), message: `Bufferbloat Grade: ${grade} (+${maxSpike}ms spike)`, phase: 'done' }]);
+      }
+
       const testRecord: HistoryRecord = {
         id: Date.now().toString(),
         date: new Date().toISOString(),
@@ -442,7 +464,8 @@ export default function Home() {
         download: parseFloat(finalResultsRef.current.download.toFixed(1)) || 0,
         upload: parseFloat(finalResultsRef.current.upload.toFixed(1)) || 0,
         server: activeServer ? activeServer.location : 'Unknown',
-        isp: clientInfo.isp || 'Unknown'
+        isp: clientInfo.isp || 'Unknown',
+        bufferbloatGrade: grade
       };
 
       setHistory(prev => {
@@ -466,6 +489,7 @@ export default function Home() {
                  packetLoss,
                  isp: testRecord.isp,
                  server: testRecord.server,
+                 bufferbloatGrade: grade,
                  userId: session.user?.id
              })
          }).catch(console.error);
@@ -588,7 +612,8 @@ export default function Home() {
           jitter: testJitter,
           packetLoss,
           isp: clientInfo.isp,
-          server: activeServer ? activeServer.location : 'Optimal'
+          server: activeServer ? activeServer.location : 'Optimal',
+          bufferbloatGrade
       };
 
       const res = await fetch(`${HOST}/api/results`, {
@@ -781,6 +806,21 @@ export default function Home() {
               {status === 'upload'
                 ? (uploadSpeed > 0 ? <><ArrowUp size={14} />{` ${(uploadSpeed / 8).toFixed(2)} MB/s`}</> : 'Testing...')
                 : (uploadSpeed > 0 ? <><ArrowUp size={14} />{` ${(uploadSpeed / 8).toFixed(2)} MB/s`}</> : '\u00A0')}
+            </div>
+          </div>
+
+          <div className="metric-card">
+            <div className="metric-header">
+              <div className="metric-title"><Activity size={14} /> BUFFERBLOAT <span className="metric-title-sub">grade</span></div>
+              <div className="metric-icon-bg" style={{ color: 'var(--accent-purple)' }}><Activity size={14} /></div>
+            </div>
+            <div className="metric-value-block">
+              <span className="metric-value" style={{ color: bufferbloatGrade === 'A+' || bufferbloatGrade === 'A' ? 'var(--accent-green)' : bufferbloatGrade === 'B' || bufferbloatGrade === 'C' ? '#f59e0b' : bufferbloatGrade ? '#ef4444' : 'inherit' }}>
+                {bufferbloatGrade || '—'}
+              </span>
+            </div>
+            <div className="metric-sub" style={{ marginTop: '1rem', color: '#a0aec0', fontSize: '0.9rem', fontWeight: 600, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '4px' }}>
+              {bufferbloatGrade ? 'Latency under load' : '\u00A0'}
             </div>
           </div>
 

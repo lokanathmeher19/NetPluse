@@ -85,6 +85,16 @@ export default async function ResultPage({ params }: Props) {
         <h2 style={{ color: 'white', marginBottom: '0.5rem', textAlign: 'center' }}>Speed Test Result</h2>
         <p style={{ color: 'var(--text-muted)', marginBottom: '2rem', textAlign: 'center' }}>Tested on {new Date(result.createdAt).toLocaleString()}</p>
 
+        {result.bufferbloatGrade && result.bufferbloatGrade !== 'N/A' && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(255,255,255,0.05)', padding: '12px 24px', borderRadius: '30px', marginBottom: '2rem', border: '1px solid rgba(255,255,255,0.1)' }}>
+            <Activity size={20} color="var(--accent-purple)" />
+            <span style={{ color: 'white', fontWeight: 600 }}>Bufferbloat Grade:</span>
+            <span style={{ color: result.bufferbloatGrade.startsWith('A') ? 'var(--accent-green)' : result.bufferbloatGrade.startsWith('B') || result.bufferbloatGrade.startsWith('C') ? '#f59e0b' : '#ef4444', fontWeight: 800, fontSize: '1.2rem' }}>
+              {result.bufferbloatGrade}
+            </span>
+          </div>
+        )}
+
         <div style={{ width: '100%', overflow: 'hidden', borderRadius: '12px', border: '1px solid var(--border-color)', marginBottom: '2rem' }}>
           <img src={imageUrl} alt="Speed Test Result" style={{ width: '100%', height: 'auto', display: 'block' }} />
         </div>

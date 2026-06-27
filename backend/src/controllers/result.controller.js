@@ -6,7 +6,7 @@ const uploadsDir = path.join(__dirname, '../public/uploads');
 
 exports.createResult = (req, res) => {
     try {
-        const { image, ping, download, upload, jitter, packetLoss, isp, server, userId } = req.body;
+        const { image, ping, download, upload, jitter, packetLoss, isp, server, userId, bufferbloatGrade } = req.body;
 
         // Generate a short ID for the URL (e.g. 5 random hex chars)
         const id = Math.random().toString(36).substring(2, 8);
@@ -43,6 +43,7 @@ exports.createResult = (req, res) => {
             upload,
             jitter,
             packetLoss,
+            bufferbloatGrade: bufferbloatGrade || 'N/A',
             isp,
             server,
             imagePath: fileName ? `/uploads/${fileName}` : null,
