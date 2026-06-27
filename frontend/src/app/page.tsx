@@ -84,9 +84,9 @@ export default function Home() {
     cores: '...'
   });
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [servers, setServers] = useState<ServerNode[]>([]);
   const [activeServer, setActiveServer] = useState<ServerNode | null>(null);
+  const [showServerModal, setShowServerModal] = useState(false);
 
   // Use environment variables for API URL, fallback to localhost for development
   const HOST = process.env.NEXT_PUBLIC_API_URL || 'https://netpluse.onrender.com';
@@ -755,7 +755,7 @@ export default function Home() {
 
             {/* Change Server Button */}
             <div className="info-action-container">
-              <button className="info-action">
+              <button className="info-action" onClick={() => setShowServerModal(true)}>
                 Change<br />Server
               </button>
             </div>
@@ -834,6 +834,36 @@ export default function Home() {
             </div>
           )
         }
+
+        {/* Server Selection Modal */}
+        <div className={`history-panel-overlay ${showServerModal ? 'open' : ''}`} onClick={() => setShowServerModal(false)} style={{ display: showServerModal ? 'block' : 'none', position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 999 }} />
+        <div className={`history-panel ${showServerModal ? 'open' : ''}`} style={{ position: 'fixed', left: '50%', transform: showServerModal ? 'translate(-50%, -50%) scale(1)' : 'translate(-50%, -50%) scale(0.9)', top: '50%', width: '90%', maxWidth: '500px', height: 'auto', maxHeight: '80vh', borderRadius: '16px', right: 'auto', transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)', opacity: showServerModal ? 1 : 0, pointerEvents: showServerModal ? 'auto' : 'none', zIndex: 1000, background: 'var(--bg-card)', border: '1px solid var(--border-color)', boxShadow: '0 20px 40px rgba(0,0,0,0.4)', padding: '1.5rem', display: 'flex', flexDirection: 'column' }}>
+          <div className="history-header" style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem', marginBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <h3 style={{ color: 'var(--text-main)', letterSpacing: '0.5px', margin: 0, fontSize: '1.2rem' }}>Select Server</h3>
+            <button style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: 'none', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'background 0.2s' }} onClick={() => setShowServerModal(false)}>
+              <XCircle size={18} />
+            </button>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', overflowY: 'auto', maxHeight: '60vh', paddingRight: '4px' }}>
+            {servers.length > 0 ? servers.map((server) => (
+              <div 
+                key={server.id} 
+                onClick={() => { setActiveServer(server); setShowServerModal(false); }}
+                style={{ padding: '12px 16px', borderRadius: '8px', background: activeServer?.id === server.id ? 'rgba(129, 226, 235, 0.1)' : 'rgba(255,255,255,0.02)', border: `1px solid ${activeServer?.id === server.id ? 'var(--accent-cyan)' : 'transparent'}`, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', transition: 'all 0.2s ease' }}
+                onMouseEnter={(e) => { if (activeServer?.id !== server.id) e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; }}
+                onMouseLeave={(e) => { if (activeServer?.id !== server.id) e.currentTarget.style.background = 'rgba(255,255,255,0.02)'; }}
+              >
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  <span style={{ color: 'var(--text-main)', fontWeight: 600, fontSize: '1rem' }}>{server.location}</span>
+                  <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>{server.name}</span>
+                </div>
+                {activeServer?.id === server.id && <CheckCircle size={20} color="var(--accent-cyan)" />}
+              </div>
+            )) : (
+              <div style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '2rem 0' }}>Loading servers...</div>
+            )}
+          </div>
+        </div>
 
       </main >
 
