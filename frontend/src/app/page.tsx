@@ -103,6 +103,29 @@ export default function Home() {
   // Use environment variables for API URL, fallback to localhost for development
   const HOST = process.env.NEXT_PUBLIC_API_URL || 'https://netpluse.onrender.com';
 
+  const handleRequestGPS = () => {
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setClientInfo(prev => ({
+            ...prev,
+            lat: position.coords.latitude,
+            lon: position.coords.longitude,
+            city: prev.city.includes('Offline') ? 'GPS Location' : prev.city
+          }));
+          alert("📍 Precision GPS Location acquired and map updated!");
+        },
+        (err) => {
+          console.error('Geolocation error:', err);
+          alert("❌ Could not get GPS location. Please allow location permissions in your browser's top URL bar and try again.");
+        },
+        { timeout: 10000, enableHighAccuracy: true }
+      );
+    } else {
+      alert("❌ Geolocation is not supported by your browser.");
+    }
+  };
+
   useEffect(() => {
     setTestId(Math.floor(Math.random() * 90000) + 10000);
   }, []);
@@ -535,6 +558,12 @@ export default function Home() {
     });
   };
 
+  const getQualityRating = () => {
+    if (downloadSpeed > 300 && ping < 20) return "Excellent for UHD Streaming & Gaming";
+    if (downloadSpeed > 100 && ping < 50) return "Great for HD Streaming & Working";
+    if (downloadSpeed > 25) return "Good for Standard Web Use";
+    return "Poor - Network Optimization Suggested";
+  };
 
   const handleShare = async () => {
     const dashboard = document.getElementById('speedtest-dashboard');
