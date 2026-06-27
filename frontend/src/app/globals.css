@@ -194,49 +194,65 @@ h4 {
 }
 
 /* Start/Again Button */
-.action-btn {
-  margin-top: 2rem;
-  background: linear-gradient(90deg, var(--accent-blue), var(--accent-cyan), var(--accent-green));
-  border: none;
-  padding: 1rem 3rem;
-  border-radius: 50px;
-  color: white;
-  font-size: 1.1rem;
-  font-weight: 600;
-  letter-spacing: 1px;
+.go-button-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 250px;
+  width: 100%;
+}
+
+.action-btn.go-btn {
+  background: transparent;
+  border: 4px solid var(--accent-cyan);
+  border-radius: 50%;
+  width: 160px;
+  height: 160px;
+  color: var(--accent-cyan);
+  font-size: 2.5rem;
+  font-weight: 700;
+  letter-spacing: 2px;
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  box-shadow: 0 10px 20px rgba(122, 200, 255, 0.4);
-  transition: transform 0.2s, box-shadow 0.2s;
+  justify-content: center;
+  box-shadow: 0 0 20px rgba(122, 200, 255, 0.2), inset 0 0 20px rgba(122, 200, 255, 0.2);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
 }
 
-.app-container.dark .action-btn {
-  box-shadow: 0 10px 20px rgba(122, 200, 255, 0.1);
+.action-btn.go-btn:before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle, rgba(122, 200, 255, 0.4) 0%, transparent 70%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
 }
 
-.action-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 15px 25px rgba(122, 200, 255, 0.5);
+.action-btn.go-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 40px rgba(122, 200, 255, 0.4), inset 0 0 30px rgba(122, 200, 255, 0.4);
+  text-shadow: 0 0 10px rgba(122, 200, 255, 0.8);
 }
 
-.action-btn:active {
-  transform: translateY(0px);
+.action-btn.go-btn:hover:before {
+  opacity: 1;
 }
 
-@keyframes testing-pulse {
-  0% { box-shadow: 0 0 0 0 rgba(122, 200, 255, 0.6); }
-  70% { box-shadow: 0 0 0 20px rgba(122, 200, 255, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(122, 200, 255, 0); }
+.action-btn.go-btn:active {
+  transform: scale(0.95);
+  box-shadow: 0 0 10px rgba(122, 200, 255, 0.2), inset 0 0 10px rgba(122, 200, 255, 0.2);
 }
 
-.action-btn:disabled {
-  opacity: 1; /* Keep bright and highlighted */
-  cursor: not-allowed;
-  transform: scale(1.02); /* Slightly popped out */
-  animation: testing-pulse 1.5s infinite;
-  border: 2px solid rgba(255, 255, 255, 0.5);
+.app-container.dark .action-btn.go-btn {
+  border-color: var(--accent-cyan);
+  color: var(--accent-cyan);
 }
 
 /* Bottom Metric Cards Container */
