@@ -43,8 +43,8 @@ export default function Home() {
   const [chartData, setChartData] = useState<{ time: number, speed: number }[]>([]);
   const [idleChartData, setIdleChartData] = useState<{ time: number, speed: number }[]>([]);
   const [idlePing, setIdlePing] = useState<number | null>(null);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [idleJitter, setIdleJitter] = useState<number | null>(null);
+  const [testJitter, setTestJitter] = useState<number | null>(null);
+  const [packetLoss, setPacketLoss] = useState<number | null>(null);
   const [loadedDownloadPing, setLoadedDownloadPing] = useState<number | null>(null);
   const [loadedUploadPing, setLoadedUploadPing] = useState<number | null>(null);
   const [testActive, setTestActive] = useState(false);
@@ -284,7 +284,7 @@ export default function Home() {
             lastPing = pingTime;
 
             setIdlePing(pingTime);
-            setIdleJitter(Math.round(currentJitter));
+            setTestJitter(Math.round(currentJitter));
             setIdleChartData(prev => [...prev.slice(-19), { time: Date.now(), speed: pingTime }]);
           } catch {
             // Silently ignore ping errors when idle
@@ -346,11 +346,13 @@ export default function Home() {
     const testStartTime = performance.now();
 
     try {
-      // 1. PING PHASE
+      // 1. PING & JITTER PHASE
       setStatus('ping');
       setMaxValue(100);
       let totalPing = 0;
-      const pingIterations = 8;
+      let totalJitter = 0;
+      let previousPing = -1;
+      const pingIterations = 10;
 
       for (let i = 0; i < pingIterations; i++) {
         const start = performance.now();
@@ -358,16 +360,41 @@ export default function Home() {
         const took = Math.round(performance.now() - start);
 
         totalPing += took;
+        if (previousPing !== -1) {
+          totalJitter += Math.abs(took - previousPing);
+        }
+        previousPing = took;
 
         setCurrentValue(took);
         setPing(took);
         setChartData(prev => [...prev.slice(-20), { time: Date.now(), speed: took }]);
         setTerminalPackets(prev => [...prev.slice(-49), { id: Math.random(), timestamp: Date.now(), message: `Ping reply from node - ${took}ms`, phase: 'ping' }]);
-        await new Promise(r => setTimeout(r, 100)); // gap between pings
+        await new Promise(r => setTimeout(r, 60)); // gap between pings
       }
       const finalPing = Math.round(totalPing / pingIterations);
+      const finalJitter = Math.round(totalJitter / (pingIterations - 1));
       setPing(finalPing);
+      setTestJitter(finalJitter);
       finalResultsRef.current.ping = finalPing;
+
+      // 1.5 PACKET LOSS BURST PHASE
+      setTerminalPackets(prev => [...prev.slice(-49), { id: Math.random(), timestamp: Date.now(), message: `Initiating UDP/TCP Packet Loss Burst...`, phase: 'ping' }]);
+      const lossIterations = 30;
+      let dropped = 0;
+      const lossPromises = [];
+      for (let i = 0; i < lossIterations; i++) {
+        lossPromises.push(
+          Promise.race([
+            fetch(`${HOST}/ping`, { cache: 'no-store' }).then(r => { if (!r.ok) throw new Error(); return true; }),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 800))
+          ]).catch(() => { dropped++; return false; })
+        );
+      }
+      await Promise.all(lossPromises);
+      const lossPercent = parseFloat(((dropped / lossIterations) * 100).toFixed(1));
+      setPacketLoss(lossPercent);
+      setTerminalPackets(prev => [...prev.slice(-49), { id: Math.random(), timestamp: Date.now(), message: `Packet Loss Analysis complete: ${lossPercent}%`, phase: 'ping' }]);
+
 
       // 2. DOWNLOAD PHASE
       setStatus('download');
@@ -781,6 +808,14 @@ export default function Home() {
                 <div className="result-item">
                   <span className="label">Network Rating</span>
                   <span className="val" style={{ color: 'var(--accent-cyan)', fontSize: '1rem', textAlign: 'center' }}>{getQualityRating()}</span>
+                </div>
+                <div className="result-item">
+                  <span className="label">Jitter</span>
+                  <span className="val">{testJitter !== null ? `${testJitter} ms` : '—'}</span>
+                </div>
+                <div className="result-item">
+                  <span className="label">Packet Loss</span>
+                  <span className="val">{packetLoss !== null ? `${packetLoss}%` : '—'}</span>
                 </div>
                 <div className="result-item">
                   <span className="label">Data Transferred</span>
