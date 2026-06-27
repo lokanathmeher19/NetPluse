@@ -308,17 +308,21 @@ h4 {
 
 .metric-card {
   background: var(--bg-color);
-  border-radius: 24px;
-  padding: 1.5rem 1.5rem;
+  border-radius: 20px;
+  padding: 2rem 1.5rem;
   flex: 1;
   max-width: 250px;
-  box-shadow:
-    12px 12px 24px var(--neumorphic-dark),
-    -12px -12px 24px var(--neumorphic-light);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
   display: flex;
   flex-direction: column;
   position: relative;
   transition: all 0.3s ease;
+  border: 1px solid rgba(255,255,255,0.2);
+}
+
+.app-container.light .metric-card {
+  background: linear-gradient(145deg, #f0f4f8, #e6ecf2);
+  box-shadow: 10px 10px 30px rgba(174, 192, 219, 0.4), -10px -10px 30px #ffffff;
 }
 
 .app-container.dark .metric-card {
@@ -336,25 +340,29 @@ h4 {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--text-main);
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #4a5568;
   text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.app-container.dark .metric-title {
+  color: var(--text-main);
 }
 
 .metric-icon-bg {
-  width: 30px;
-  height: 30px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
+  background: #7bd3f7; /* Light cyan from screenshot */
   color: white;
 }
 
 .metric-icon-bg.up {
-  background: linear-gradient(135deg, var(--accent-cyan), var(--accent-green));
+  background: #89e6b4; /* Light green from screenshot */
 }
 
 .metric-value-block {
@@ -367,16 +375,23 @@ h4 {
 }
 
 .metric-value {
-  font-size: 2.5rem;
-  font-weight: 700;
+  font-size: 3rem;
+  font-weight: 800;
   font-family: var(--font-h);
-  color: var(--text-main);
+  color: #1a202c;
   font-variant-numeric: tabular-nums;
+  letter-spacing: -1px;
+}
+.app-container.dark .metric-value {
+  color: var(--text-main);
 }
 
 .metric-unit {
-  font-size: 1rem;
-  font-weight: 600;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1a202c;
+}
+.app-container.dark .metric-unit {
   color: var(--text-main);
 }
 
@@ -388,17 +403,18 @@ h4 {
 }
 
 .metric-title-sub {
-  color: var(--text-muted);
-  font-size: 0.75rem;
-  font-weight: 600;
-  margin-left: 4px;
+  color: #a0aec0;
+  font-size: 0.8rem;
+  font-weight: 700;
+  margin-left: 6px;
 }
 
 .metric-sub-block {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
+  justify-content: center;
   align-items: center;
+  gap: 1.5rem;
+  margin-top: 1rem;
 }
 
 .metric-sub-icon {

@@ -77,7 +77,7 @@ export default function Home() {
     distance: number;
   }
 
-  const [clientInfo, setClientInfo] = useState({ ip: 'Loading...', isp: '...', city: '...', lat: 0, lon: 0 });
+  const [clientInfo, setClientInfo] = useState({ ip: 'Loading...', isp: '...', city: '...', lat: 0, lon: 0, asn: '...', timezone: '...' });
   const [telemetry, setTelemetry] = useState({
     localIp: 'Detecting...',
     connection: 'Detecting...',
@@ -138,11 +138,11 @@ export default function Home() {
         const geoData = await Promise.any([
           fetchWithTimeout('https://get.geojs.io/v1/ip/geo.json').then((data) => {
             if (!data.latitude) throw new Error('geojs fail');
-            return { ip: data.ip || 'Unknown IP', isp: data.organization_name || 'Unknown ISP', city: `${data.city}, ${data.region}`, lat: Number(data.latitude) || 0, lon: Number(data.longitude) || 0 };
+            return { ip: data.ip || 'Unknown IP', isp: data.organization_name || 'Unknown ISP', city: `${data.city}, ${data.region}`, lat: Number(data.latitude) || 0, lon: Number(data.longitude) || 0, asn: data.asn || 'Unknown ASN', timezone: data.timezone || 'Unknown Timezone' };
           }),
           fetchWithTimeout('https://ipapi.co/json/').then((data) => {
             if (!data.latitude) throw new Error('ipapi fail');
-            return { ip: data.ip || 'Unknown IP', isp: data.org || 'Unknown ISP', city: `${data.city || 'Unknown'}, ${data.region_code || ''}`, lat: data.latitude || 0, lon: data.longitude || 0 };
+            return { ip: data.ip || 'Unknown IP', isp: data.org || 'Unknown ISP', city: `${data.city || 'Unknown'}, ${data.region_code || ''}`, lat: data.latitude || 0, lon: data.longitude || 0, asn: data.asn || 'Unknown ASN', timezone: data.timezone || 'Unknown Timezone' };
           })
         ]);
 
@@ -150,7 +150,7 @@ export default function Home() {
         setClientInfo(geoData);
       } catch (e) {
         console.error("GeoIP Providers failed or timed out. Falling back to default.", e);
-        setClientInfo({ ip: 'Localhost (Fallback)', isp: 'Local Network', city: 'Offline Environment', lat: 37.7749, lon: -122.4194 });
+        setClientInfo({ ip: 'Localhost (Fallback)', isp: 'Local Network', city: 'Offline Environment', lat: 37.7749, lon: -122.4194, asn: 'N/A', timezone: 'N/A' });
       }
 
       // Try actual HTML5 geolocation for highly accurate "live location" mapping over GeoIP.
@@ -624,18 +624,18 @@ export default function Home() {
               <span className="metric-value">{status === 'idle' && idlePing !== null ? idlePing : (ping === 0 && status !== 'ping' ? '—' : ping)}</span>
               <span className="metric-unit">ms</span>
             </div>
-            <div className="metric-sub-block" style={{ flexDirection: 'row', justifyContent: 'center', gap: '0.8rem', marginTop: '6px' }}>
+            <div className="metric-sub-block">
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Idle</span>
-                <span style={{ fontWeight: 600, color: 'var(--text-main)', fontSize: '0.9rem' }}>{status === 'done' || status !== 'idle' ? (ping > 0 ? ping : '—') : (idlePing || '—')}</span>
+                <span style={{ fontSize: '0.7rem', color: '#a0aec0', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 600 }}>Idle</span>
+                <span style={{ fontWeight: 700, color: '#1a202c', fontSize: '1rem' }}>{status === 'done' || status !== 'idle' ? (ping > 0 ? ping : '—') : (idlePing || '—')}</span>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                <span style={{ fontSize: '0.65rem', color: 'var(--accent-cyan)', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'flex', alignItems: 'center', gap: '2px' }}><ArrowDown size={10} /> Load</span>
-                <span style={{ fontWeight: 600, color: 'var(--accent-cyan)', fontSize: '0.9rem' }}>{loadedDownloadPing || '—'}</span>
+                <span style={{ fontSize: '0.7rem', color: '#7bd3f7', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'flex', alignItems: 'center', gap: '2px', fontWeight: 600 }}><ArrowDown size={12} /> Load</span>
+                <span style={{ fontWeight: 700, color: '#7bd3f7', fontSize: '1rem' }}>{loadedDownloadPing || '—'}</span>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                <span style={{ fontSize: '0.65rem', color: 'var(--accent-purple)', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'flex', alignItems: 'center', gap: '2px' }}><ArrowUp size={10} /> Load</span>
-                <span style={{ fontWeight: 600, color: 'var(--accent-purple)', fontSize: '0.9rem' }}>{loadedUploadPing || '—'}</span>
+                <span style={{ fontSize: '0.7rem', color: '#1a202c', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'flex', alignItems: 'center', gap: '2px', fontWeight: 600 }}><ArrowUp size={12} /> Load</span>
+                <span style={{ fontWeight: 700, color: '#1a202c', fontSize: '1rem' }}>{loadedUploadPing || '—'}</span>
               </div>
             </div>
           </div>
@@ -648,10 +648,10 @@ export default function Home() {
             <div className="metric-value-block">
               <span className="metric-value">{downloadSpeed === 0 && status !== 'download' && status !== 'done' ? '—' : downloadSpeed.toFixed(1)}</span>
             </div>
-            <div className="metric-sub metric-sub-block">
+            <div className="metric-sub" style={{ marginTop: '1rem', color: '#a0aec0', fontSize: '0.9rem', fontWeight: 600, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '4px' }}>
               {status === 'download'
-                ? (downloadSpeed > 0 ? <span><ArrowUp size={12} className="metric-sub-icon" />{` ${(downloadSpeed / 8).toFixed(2)} MB/s`}</span> : 'Testing...')
-                : (downloadSpeed > 0 ? <span><ArrowUp size={12} className="metric-sub-icon" />{` ${(downloadSpeed / 8).toFixed(2)} MB/s`}</span> : '\u00A0')}
+                ? (downloadSpeed > 0 ? <><ArrowUp size={14} />{` ${(downloadSpeed / 8).toFixed(2)} MB/s`}</> : 'Testing...')
+                : (downloadSpeed > 0 ? <><ArrowUp size={14} />{` ${(downloadSpeed / 8).toFixed(2)} MB/s`}</> : '\u00A0')}
             </div>
           </div>
 
@@ -663,10 +663,10 @@ export default function Home() {
             <div className="metric-value-block">
               <span className="metric-value">{uploadSpeed === 0 && status !== 'upload' && status !== 'done' ? '—' : uploadSpeed.toFixed(1)}</span>
             </div>
-            <div className="metric-sub metric-sub-block">
+            <div className="metric-sub" style={{ marginTop: '1rem', color: '#a0aec0', fontSize: '0.9rem', fontWeight: 600, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '4px' }}>
               {status === 'upload'
-                ? (uploadSpeed > 0 ? <span><ArrowUp size={12} className="metric-sub-icon" />{` ${(uploadSpeed / 8).toFixed(2)} MB/s`}</span> : 'Testing...')
-                : (uploadSpeed > 0 ? <span><ArrowUp size={12} className="metric-sub-icon" />{` ${(uploadSpeed / 8).toFixed(2)} MB/s`}</span> : '\u00A0')}
+                ? (uploadSpeed > 0 ? <><ArrowUp size={14} />{` ${(uploadSpeed / 8).toFixed(2)} MB/s`}</> : 'Testing...')
+                : (uploadSpeed > 0 ? <><ArrowUp size={14} />{` ${(uploadSpeed / 8).toFixed(2)} MB/s`}</> : '\u00A0')}
             </div>
           </div>
 
@@ -735,8 +735,40 @@ export default function Home() {
 
           </div>
 
-          {/* Removed hardware telemetry row to simplify UI for end-users */}
-
+          {/* Hardware & Network Telemetry Row (Added per user request) */}
+          <div className="telemetry-grid" style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
+            gap: '12px',
+            marginTop: '1.5rem',
+            paddingTop: '1.5rem',
+            borderTop: '1px solid var(--border-color)'
+          }}>
+            <div className="telemetry-item" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>Public IP</span>
+              <span style={{ fontSize: '0.9rem', color: 'var(--text-main)', fontWeight: 500 }}>{clientInfo.ip}</span>
+            </div>
+            <div className="telemetry-item" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>Local IP</span>
+              <span style={{ fontSize: '0.9rem', color: 'var(--text-main)', fontWeight: 500 }}>{telemetry.localIp}</span>
+            </div>
+            <div className="telemetry-item" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>Connection</span>
+              <span style={{ fontSize: '0.9rem', color: 'var(--text-main)', fontWeight: 500 }}>{telemetry.connection}</span>
+            </div>
+            <div className="telemetry-item" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>ASN</span>
+              <span style={{ fontSize: '0.9rem', color: 'var(--text-main)', fontWeight: 500 }}>{clientInfo.asn}</span>
+            </div>
+            <div className="telemetry-item" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>Timezone</span>
+              <span style={{ fontSize: '0.9rem', color: 'var(--text-main)', fontWeight: 500 }}>{clientInfo.timezone}</span>
+            </div>
+            <div className="telemetry-item" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>Coordinates</span>
+              <span style={{ fontSize: '0.9rem', color: 'var(--text-main)', fontWeight: 500 }}>{clientInfo.lat.toFixed(4)}, {clientInfo.lon.toFixed(4)}</span>
+            </div>
+          </div>
 
         </div>
 
