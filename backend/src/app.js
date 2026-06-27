@@ -6,8 +6,13 @@ const { apiLimiter } = require('./middlewares/rateLimiter');
 const speedtestRoutes = require('./routes/speedtest.routes');
 const networkRoutes = require('./routes/network.routes');
 const miscRoutes = require('./routes/misc.routes');
+const resultRoutes = require('./routes/result.routes');
+const path = require('path');
 
 const app = express();
+
+// Serve static uploads for social media preview images
+app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
 
 // Enterprise Security Headers
 app.use(securityHeaders);
@@ -22,6 +27,7 @@ app.use(apiLimiter);
 app.use('/', speedtestRoutes);
 app.use('/', networkRoutes);
 app.use('/', miscRoutes);
+app.use('/api/results', resultRoutes);
 
 // Fallback error handler
 app.use((err, req, res, next) => {

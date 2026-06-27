@@ -533,33 +533,46 @@ export default function Home() {
       });
 
       const imageUri = canvas.toDataURL('image/png');
-      const textToShare = `My Internet Speed: \n⬇ ${downloadSpeed.toFixed(1)} Mbps \n⬆ ${uploadSpeed.toFixed(1)} Mbps \n📶 Ping: ${ping} ms \nCheck your speed!`;
+      
+      // 2. Upload to backend
+      const payload = {
+          image: imageUri,
+          ping,
+          download: downloadSpeed.toFixed(1),
+          upload: uploadSpeed.toFixed(1),
+          jitter: testJitter,
+          packetLoss,
+          isp: clientInfo.isp,
+          server: activeServer ? activeServer.location : 'Optimal'
+      };
 
-      // 2. Try Native Web Share API first (Mobile Devices)
-      if (navigator.share) {
-        // Convert base64 to File object for native sharing
-        const blob = await (await fetch(imageUri)).blob();
-        const file = new File([blob], 'speedtest-result.png', { type: 'image/png' });
+      const res = await fetch(`${HOST}/api/results`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      
+      if (data.success) {
+          const shareUrl = `${window.location.origin}${data.url}`;
+          const textToShare = `My Internet Speed: \n⬇ ${downloadSpeed.toFixed(1)} Mbps \n⬆ ${uploadSpeed.toFixed(1)} Mbps \n📶 Ping: ${ping} ms \nCheck my full result here: ${shareUrl}`;
 
-        await navigator.share({
-          title: 'My SpeedTest Result',
-          text: textToShare,
-          files: [file]
-        });
+          if (navigator.share) {
+             await navigator.share({
+                 title: 'My SpeedTest Result',
+                 text: textToShare,
+                 url: shareUrl
+             });
+          } else {
+             await navigator.clipboard.writeText(textToShare);
+             setShareCopied(true);
+             setTimeout(() => setShareCopied(false), 3000);
+          }
       } else {
-        // 3. Fallback for Desktop (Copy Text to Clipboard & Trigger Download)
-        await navigator.clipboard.writeText(textToShare);
-
-        const link = document.createElement('a');
-        link.href = imageUri;
-        link.download = `speedtest-result-${Date.now()}.png`;
-        link.click();
-
-        setShareCopied(true);
-        setTimeout(() => setShareCopied(false), 3000);
+          alert("Failed to generate share link");
       }
-    } catch {
-      console.error("GPS request failed or timed out.");
+    } catch(err) {
+      console.error("Failed to share", err);
     }
   };
 
