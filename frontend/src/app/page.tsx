@@ -600,9 +600,7 @@ export default function Home() {
           <div className="nav-lang">
             <Globe size={16} className="nav-lang-icon" /> EN <ChevronDown size={14} />
           </div>
-          <span className="nav-link nav-login" onClick={() => setActiveComingSoonFeature('Login')}>
-            <User size={18} /> Login
-          </span>
+
           <button
             onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
             className="theme-toggle"
