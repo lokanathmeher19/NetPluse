@@ -2,11 +2,11 @@ const express = require('express');
 const { securityHeaders, corsConfig } = require('./middlewares/security');
 const { apiLimiter } = require('./middlewares/rateLimiter');
 
-// Import routes
 const speedtestRoutes = require('./routes/speedtest.routes');
 const networkRoutes = require('./routes/network.routes');
 const miscRoutes = require('./routes/misc.routes');
 const resultRoutes = require('./routes/result.routes');
+const userRoutes = require('./routes/user.routes');
 const path = require('path');
 
 const app = express();
@@ -28,6 +28,7 @@ app.use('/', speedtestRoutes);
 app.use('/', networkRoutes);
 app.use('/', miscRoutes);
 app.use('/api/results', resultRoutes);
+app.use('/api/users', userRoutes);
 
 // Fallback error handler
 app.use((err, req, res, next) => {

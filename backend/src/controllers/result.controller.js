@@ -6,22 +6,23 @@ const uploadsDir = path.join(__dirname, '../public/uploads');
 
 exports.createResult = (req, res) => {
     try {
-        const { image, ping, download, upload, jitter, packetLoss, isp, server } = req.body;
-
-        if (!image) {
-            return res.status(400).json({ error: 'Image data is required' });
-        }
+        const { image, ping, download, upload, jitter, packetLoss, isp, server, userId } = req.body;
 
         // Generate a short ID for the URL (e.g. 5 random hex chars)
         const id = Math.random().toString(36).substring(2, 8);
+        
+        let fileName = null;
+        let filePath = null;
 
-        // Process base64 image
-        const base64Data = image.replace(/^data:image\/png;base64,/, "");
-        const fileName = `${id}.png`;
-        const filePath = path.join(uploadsDir, fileName);
+        if (image) {
+            // Process base64 image
+            const base64Data = image.replace(/^data:image\/png;base64,/, "");
+            fileName = `${id}.png`;
+            filePath = path.join(uploadsDir, fileName);
 
-        // Save image to disk
-        fs.writeFileSync(filePath, base64Data, 'base64');
+            // Save image to disk
+            fs.writeFileSync(filePath, base64Data, 'base64');
+        }
 
         // Read existing results
         let results = [];
@@ -36,6 +37,7 @@ exports.createResult = (req, res) => {
         // Create new result entry
         const newResult = {
             id,
+            userId: userId || null,
             ping,
             download,
             upload,
@@ -43,7 +45,7 @@ exports.createResult = (req, res) => {
             packetLoss,
             isp,
             server,
-            imagePath: `/uploads/${fileName}`,
+            imagePath: fileName ? `/uploads/${fileName}` : null,
             createdAt: new Date().toISOString()
         };
 

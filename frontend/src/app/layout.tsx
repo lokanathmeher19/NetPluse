@@ -10,6 +10,8 @@ export const metadata: Metadata = {
   description: 'Professional high-fidelity bandwidth visualization and telemetry dashboard',
 }
 
+import { Providers } from '../components/Providers';
+
 export default function RootLayout({
   children,
 }: {
@@ -18,9 +20,11 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} ${outfit.variable}`}>
       <body>
-        {children}
+        <Providers>
+          {children}
+        </Providers>
       </body>
     </html>
   )
-} 
+}  
 

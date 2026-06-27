@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Wifi, RefreshCw, ArrowDown, ArrowUp, ArrowLeftRight, User, Server, Layout, ChevronDown, MapPin, Check, Share2, Activity, Globe, Moon, Sun, MonitorPlay, Gamepad2, UploadCloud, CheckCircle, XCircle } from 'lucide-react';
+import { useSession, signIn, signOut } from "next-auth/react";
 import dynamic from 'next/dynamic';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
@@ -19,6 +20,12 @@ export interface HistoryRecord {
 }
 
 export default function Home() {
+  const { data: session } = useSession();
+  const [authModal, setAuthModal] = useState<'login' | 'register' | null>(null);
+  const [authEmail, setAuthEmail] = useState('');
+  const [authPassword, setAuthPassword] = useState('');
+  const [authName, setAuthName] = useState('');
+
   const [status, setStatus] = useState<'idle' | 'ping' | 'download' | 'upload' | 'done'>('idle');
   const [ping, setPing] = useState<number>(0);
   const [downloadSpeed, setDownloadSpeed] = useState<number>(0);
@@ -257,15 +264,33 @@ export default function Home() {
     // Initialize the true multithreading web worker
     workerRef.current = new Worker(new URL('../workers/speedWorker.ts', import.meta.url));
 
-    try {
-      const saved = localStorage.getItem('speedtest_history');
-      if (saved) setHistory(JSON.parse(saved));
-    } catch { }
-
     return () => {
       workerRef.current?.terminate();
     };
   }, [HOST]);
+
+  // Load History based on Auth State
+  useEffect(() => {
+    if (session && (session as any).apiToken) {
+      fetch(`${HOST}/api/users/history`, {
+        headers: { 'Authorization': `Bearer ${(session as any).apiToken}` }
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          setHistory(data.data.map((r: any) => ({
+            id: r.id, date: r.createdAt, ping: r.ping, download: r.download, upload: r.upload, server: r.server, isp: r.isp
+          })));
+        }
+      })
+      .catch(console.error);
+    } else {
+      try {
+        const saved = localStorage.getItem('speedtest_history');
+        if (saved) setHistory(JSON.parse(saved));
+      } catch { }
+    }
+  }, [session, HOST]);
 
   // Live "Heartbeat" Idle Ping Tracker
   useEffect(() => {
@@ -422,9 +447,29 @@ export default function Home() {
 
       setHistory(prev => {
         const newArr = [testRecord, ...prev].slice(0, 20);
-        localStorage.setItem('speedtest_history', JSON.stringify(newArr));
+        if (!session) {
+            localStorage.setItem('speedtest_history', JSON.stringify(newArr));
+        }
         return newArr;
       });
+      
+      // Auto-save to cloud if logged in (without image for speed)
+      if (session) {
+         fetch(`${HOST}/api/results`, {
+             method: 'POST',
+             headers: { 'Content-Type': 'application/json' },
+             body: JSON.stringify({
+                 ping: testRecord.ping,
+                 download: testRecord.download,
+                 upload: testRecord.upload,
+                 jitter: testJitter,
+                 packetLoss,
+                 isp: testRecord.isp,
+                 server: testRecord.server,
+                 userId: session.user?.id
+             })
+         }).catch(console.error);
+      }
 
       setStatus('done');
       // Set the final dial value to the calculated average download speed instead of resetting it to zero
@@ -576,6 +621,26 @@ export default function Home() {
     }
   };
 
+  const handleAuthSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (authModal === 'login' || authModal === 'register') {
+      const res = await signIn('credentials', {
+        redirect: false,
+        email: authEmail,
+        password: authPassword,
+        name: authName,
+        action: authModal
+      });
+      if (res?.error) {
+        alert(res.error);
+      } else {
+        setAuthModal(null);
+        setAuthEmail('');
+        setAuthPassword('');
+      }
+    }
+  };
+
   const getVerdicts = () => {
     if (status !== 'done') return [];
 
@@ -616,6 +681,15 @@ export default function Home() {
         </div>
         <div className="nav-links">
           <span className="nav-link" onClick={() => setShowHistory(true)}>History</span>
+          {session ? (
+            <div className="nav-lang" onClick={() => signOut()}>
+              <User size={16} className="nav-lang-icon" /> {session.user?.name}
+            </div>
+          ) : (
+            <div className="nav-lang" onClick={() => setAuthModal('login')}>
+              <User size={16} className="nav-lang-icon" /> Sign In
+            </div>
+          )}
           <div className="nav-lang">
             <Globe size={16} className="nav-lang-icon" /> EN <ChevronDown size={14} />
           </div>
@@ -889,6 +963,33 @@ export default function Home() {
             )) : (
               <div style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '2rem 0' }}>Loading servers...</div>
             )}
+          </div>
+        </div>
+
+        {/* Auth Modal */}
+        <div className={`history-panel-overlay ${authModal ? 'open' : ''}`} onClick={() => setAuthModal(null)} style={{ display: authModal ? 'block' : 'none', position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 999 }} />
+        <div className={`history-panel ${authModal ? 'open' : ''}`} style={{ position: 'fixed', left: '50%', transform: authModal ? 'translate(-50%, -50%) scale(1)' : 'translate(-50%, -50%) scale(0.9)', top: '50%', width: '90%', maxWidth: '400px', borderRadius: '16px', transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)', opacity: authModal ? 1 : 0, pointerEvents: authModal ? 'auto' : 'none', zIndex: 1000, background: 'var(--bg-card)', border: '1px solid var(--border-color)', boxShadow: '0 20px 40px rgba(0,0,0,0.4)', padding: '2rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+            <h3 style={{ color: 'var(--text-main)', margin: 0 }}>{authModal === 'register' ? 'Create Account' : 'Sign In'}</h3>
+            <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }} onClick={() => setAuthModal(null)}>
+              <XCircle size={24} />
+            </button>
+          </div>
+          <form onSubmit={handleAuthSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            {authModal === 'register' && (
+              <input type="text" placeholder="Full Name" value={authName} onChange={e => setAuthName(e.target.value)} required style={{ padding: '12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'rgba(255,255,255,0.05)', color: 'var(--text-main)' }} />
+            )}
+            <input type="email" placeholder="Email Address" value={authEmail} onChange={e => setAuthEmail(e.target.value)} required style={{ padding: '12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'rgba(255,255,255,0.05)', color: 'var(--text-main)' }} />
+            <input type="password" placeholder="Password" value={authPassword} onChange={e => setAuthPassword(e.target.value)} required style={{ padding: '12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'rgba(255,255,255,0.05)', color: 'var(--text-main)' }} />
+            <button type="submit" style={{ padding: '12px', borderRadius: '8px', background: 'var(--accent-cyan)', color: '#000', fontWeight: 'bold', border: 'none', cursor: 'pointer', marginTop: '0.5rem' }}>
+              {authModal === 'register' ? 'Sign Up' : 'Login'}
+            </button>
+          </form>
+          <div style={{ marginTop: '1rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+            {authModal === 'register' ? 'Already have an account? ' : 'Need an account? '}
+            <span style={{ color: 'var(--accent-cyan)', cursor: 'pointer' }} onClick={() => setAuthModal(authModal === 'register' ? 'login' : 'register')}>
+              {authModal === 'register' ? 'Sign In' : 'Sign Up'}
+            </span>
           </div>
         </div>
 
