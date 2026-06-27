@@ -760,6 +760,20 @@ export default function Home() {
               </button>
             </div>
 
+            {/* Connection Mode Toggle */}
+            <div className="info-block" style={{ borderLeft: '1px solid var(--border-color)', paddingLeft: '1.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+              <span className="info-label" style={{ marginBottom: '8px', letterSpacing: '0.5px' }}>Test Mode</span>
+              <div 
+                style={{ display: 'flex', background: 'rgba(0,0,0,0.2)', borderRadius: '24px', padding: '4px', cursor: 'pointer', border: '1px solid var(--border-color)', position: 'relative', width: '130px' }} 
+                onClick={() => setConnType(prev => prev === 'multi' ? 'single' : 'multi')}
+                title="Toggle between Single-Thread and Multi-Thread downloading. ISPs sometimes throttle single threads."
+              >
+                <div style={{ position: 'absolute', top: '4px', bottom: '4px', left: connType === 'multi' ? 'calc(50% + 2px)' : '4px', width: 'calc(50% - 6px)', background: 'var(--accent-cyan)', borderRadius: '20px', transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)' }} />
+                <span style={{ flex: 1, textAlign: 'center', padding: '4px 0', zIndex: 1, fontSize: '0.75rem', textTransform: 'uppercase', fontWeight: 700, color: connType === 'single' ? '#070e1a' : 'var(--text-muted)', transition: 'color 0.3s' }}>Single</span>
+                <span style={{ flex: 1, textAlign: 'center', padding: '4px 0', zIndex: 1, fontSize: '0.75rem', textTransform: 'uppercase', fontWeight: 700, color: connType === 'multi' ? '#070e1a' : 'var(--text-muted)', transition: 'color 0.3s' }}>Multi</span>
+              </div>
+            </div>
+
           </div>
 
           {/* Hardware & Network Telemetry Row (Added per user request) */}
