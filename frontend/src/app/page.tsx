@@ -1,13 +1,12 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Wifi, RefreshCw, ArrowDown, ArrowUp, ArrowLeftRight, User, Server, Layout, ChevronDown, MapPin, Check, Share2, Activity, Globe, Moon, Sun, MonitorPlay, Gamepad2, UploadCloud, CheckCircle, XCircle } from 'lucide-react';
+import { Wifi, ArrowDown, ArrowUp, ArrowLeftRight, User, Server, ChevronDown, Check, Share2, Activity, Globe, Moon, Sun, MonitorPlay, Gamepad2, UploadCloud, CheckCircle, XCircle } from 'lucide-react';
 import { useSession, signIn, signOut } from "next-auth/react";
 import dynamic from 'next/dynamic';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 const Speedometer = dynamic(() => import('../components/Speedometer'), { ssr: false });
-const LiveChart = dynamic(() => import('../components/LiveChart'), { ssr: false });
 
 export interface HistoryRecord {
   id: string;
@@ -51,6 +50,7 @@ export default function Home() {
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [chartData, setChartData] = useState<{ time: number, speed: number }[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [idleChartData, setIdleChartData] = useState<{ time: number, speed: number }[]>([]);
   const [idlePing, setIdlePing] = useState<number | null>(null);
   const [testJitter, setTestJitter] = useState<number | null>(null);
@@ -64,6 +64,7 @@ export default function Home() {
 
   const [history, setHistory] = useState<HistoryRecord[]>([]);
   const [showHistory, setShowHistory] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [selectedHistoryItem, setSelectedHistoryItem] = useState<HistoryRecord | null>(null);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [shareCopied, setShareCopied] = useState(false);
@@ -96,33 +97,11 @@ export default function Home() {
 
   const [servers, setServers] = useState<ServerNode[]>([]);
   const [activeServer, setActiveServer] = useState<ServerNode | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [showServerModal, setShowServerModal] = useState(false);
 
   // Use environment variables for API URL, fallback to localhost for development
   const HOST = process.env.NEXT_PUBLIC_API_URL || 'https://netpluse.onrender.com';
-
-  const handleRequestGPS = () => {
-    if ("geolocation" in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setClientInfo(prev => ({
-            ...prev,
-            lat: position.coords.latitude,
-            lon: position.coords.longitude,
-            city: prev.city.includes('Offline') ? 'GPS Location' : prev.city
-          }));
-          alert("📍 Precision GPS Location acquired and map updated!");
-        },
-        (err) => {
-          console.error('Geolocation error:', err);
-          alert("❌ Could not get GPS location. Please allow location permissions in your browser's top URL bar and try again.");
-        },
-        { timeout: 10000, enableHighAccuracy: true }
-      );
-    } else {
-      alert("❌ Geolocation is not supported by your browser.");
-    }
-  };
 
   useEffect(() => {
     setTestId(Math.floor(Math.random() * 90000) + 10000);
@@ -141,10 +120,6 @@ export default function Home() {
       };
 
       try {
-        // Fire all requests concurrently for speed, but use allSettled to pick results in a STRICT deterministic order.
-        // This prevents the map from "jumping" to different coordinates on every page reload depending on which API resolved first.
-        // Find the first successful response as quickly as possible, avoiding the full 3000ms wait if one is slow.
-        // We use Promise.any to return the first successful result immediately.
         const geoData = await Promise.any([
           fetchWithTimeout('https://get.geojs.io/v1/ip/geo.json').then((data) => {
             if (!data.latitude) throw new Error('geojs fail');
@@ -163,8 +138,6 @@ export default function Home() {
         setClientInfo({ ip: 'Localhost (Fallback)', isp: 'Local Network', city: 'Offline Environment', lat: 37.7749, lon: -122.4194, asn: 'N/A', timezone: 'N/A' });
       }
 
-      // Try actual HTML5 geolocation for highly accurate "live location" mapping over GeoIP.
-      // If the user grants this, it locks specifically onto their physical device hardware coordinates.
       if ("geolocation" in navigator) {
         navigator.geolocation.getCurrentPosition(
           (position) => {
@@ -183,10 +156,8 @@ export default function Home() {
 
     // Advanced Telemetry Sniffer Phase
     const startTelemetrySniffer = async () => {
-      // 1. Core Concurrency Counter
       const cores = navigator.hardwareConcurrency ? `${navigator.hardwareConcurrency} Cores (Active)` : 'Unknown';
 
-      // 2. Hardware Connection Type
       // @ts-expect-error - navigator.connection is non-standard but heavily supported
       const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
       let connectionType = 'Ethernet / Direct';
@@ -198,10 +169,8 @@ export default function Home() {
         }
       }
 
-      // 3. Local Hardware IP Sniffer using WebRTC (Creates hidden peer channel)
       let detectedLocalIp = 'Hidden (Proxy/VPN)';
       try {
-        // Adding public STUN servers forces the browser to resolve ICE candidates for real local IPs instead of masking them via mDNS
         const rtc = new RTCPeerConnection({ iceServers: [{ urls: "stun:stun.l.google.com:19302" }] });
         rtc.createDataChannel('');
         rtc.createOffer().then(offer => rtc.setLocalDescription(offer)).catch(() => { });
@@ -216,7 +185,6 @@ export default function Home() {
             rtc.close();
           }
         };
-        // Give it 2s to catch an IP
         setTimeout(() => { if (detectedLocalIp.startsWith('Hidden')) setTelemetry(prev => ({ ...prev, localIp: '192.168.x.x (Masked by OS)' })) }, 2000);
       } catch (e) {
         console.warn("WebRTC Sniffing blocked.", e);
@@ -227,7 +195,6 @@ export default function Home() {
 
     startTelemetrySniffer();
 
-    // Fetch mock servers and select fastest
     const fetchServers = async () => {
       try {
         const response = await fetch(`${HOST}/servers`);
@@ -243,7 +210,6 @@ export default function Home() {
           for (const server of serverList) {
             const start = performance.now();
             try {
-              // Pre-ping check to find fastest node
               await fetch(`${HOST}/ping`, { cache: 'no-store' });
               const pingTime = Math.round(performance.now() - start);
               if (pingTime < bestPing) {
@@ -251,7 +217,6 @@ export default function Home() {
                 bestServer = server;
               }
             } catch {
-              // ignore ping errors silently
             }
           }
           setActiveServer(bestServer);
@@ -264,7 +229,6 @@ export default function Home() {
     fetchGeoIP();
     fetchServers();
 
-    // Initialize the true multithreading web worker
     workerRef.current = new Worker(new URL('../workers/speedWorker.ts', import.meta.url));
 
     return () => {
@@ -272,15 +236,17 @@ export default function Home() {
     };
   }, [HOST]);
 
-  // Load History based on Auth State
   useEffect(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     if (session && (session as any).apiToken) {
       fetch(`${HOST}/api/users/history`, {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         headers: { 'Authorization': `Bearer ${(session as any).apiToken}` }
       })
       .then(res => res.json())
       .then(data => {
         if (data.success) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           setHistory(data.data.map((r: any) => ({
             id: r.id, date: r.createdAt, ping: r.ping, download: r.download, upload: r.upload, server: r.server, isp: r.isp
           })));
@@ -295,7 +261,6 @@ export default function Home() {
     }
   }, [session, HOST]);
 
-  // Live "Heartbeat" Idle Ping Tracker
   useEffect(() => {
     let active = true;
     let lastPing = -1;
@@ -313,9 +278,7 @@ export default function Home() {
 
             setIdlePing(pingTime);
             setTestJitter(Math.round(currentJitter));
-            setIdleChartData(prev => [...prev.slice(-19), { time: Date.now(), speed: pingTime }]);
           } catch {
-            // Silently ignore ping errors when idle
           }
         }
         await new Promise(r => setTimeout(r, 2000));
@@ -327,7 +290,6 @@ export default function Home() {
     return () => { active = false; };
   }, [status, testActive, HOST]);
 
-  // Track Loaded Ping (Latency under load)
   useEffect(() => {
     let active = true;
     const pings: number[] = [];
@@ -340,12 +302,12 @@ export default function Home() {
           const latency = Math.round(performance.now() - start);
           pings.push(latency);
 
-          if (pings.length > 5) pings.shift(); // keep last 5 for rolling average
+          if (pings.length > 5) pings.shift();
           const avg = Math.round(pings.reduce((a, b) => a + b, 0) / pings.length);
 
           if (status === 'download') setLoadedDownloadPing(avg);
           if (status === 'upload') setLoadedUploadPing(avg);
-        } catch { /* silent fail on ping drops */ }
+        } catch { }
 
         if (active) await new Promise(r => setTimeout(r, 750));
       }
@@ -375,7 +337,6 @@ export default function Home() {
     const testStartTime = performance.now();
 
     try {
-      // 1. PING & JITTER PHASE
       setStatus('ping');
       setMaxValue(100);
       let totalPing = 0;
@@ -398,7 +359,7 @@ export default function Home() {
         setPing(took);
         setChartData(prev => [...prev.slice(-20), { time: Date.now(), speed: took }]);
         setTerminalPackets(prev => [...prev.slice(-49), { id: Math.random(), timestamp: Date.now(), message: `Ping reply from node - ${took}ms`, phase: 'ping' }]);
-        await new Promise(r => setTimeout(r, 60)); // gap between pings
+        await new Promise(r => setTimeout(r, 60));
       }
       const finalPing = Math.round(totalPing / pingIterations);
       const finalJitter = Math.round(totalJitter / (pingIterations - 1));
@@ -406,7 +367,6 @@ export default function Home() {
       setTestJitter(finalJitter);
       finalResultsRef.current.ping = finalPing;
 
-      // 1.5 PACKET LOSS BURST PHASE
       setTerminalPackets(prev => [...prev.slice(-49), { id: Math.random(), timestamp: Date.now(), message: `Initiating UDP/TCP Packet Loss Burst...`, phase: 'ping' }]);
       const lossIterations = 30;
       let dropped = 0;
@@ -424,24 +384,20 @@ export default function Home() {
       setPacketLoss(lossPercent);
       setTerminalPackets(prev => [...prev.slice(-49), { id: Math.random(), timestamp: Date.now(), message: `Packet Loss Analysis complete: ${lossPercent}%`, phase: 'ping' }]);
 
-
-      // 2. DOWNLOAD PHASE
       setStatus('download');
       setMaxValue(500);
       setChartData([]);
-      await new Promise(r => setTimeout(r, 500)); // Visual pause
+      await new Promise(r => setTimeout(r, 500));
       await measureDownload();
 
-      // 3. UPLOAD PHASE
       setStatus('upload');
       setMaxValue(500);
       setChartData([]);
-      await new Promise(r => setTimeout(r, 500)); // Visual pause
+      await new Promise(r => setTimeout(r, 500));
       await measureUpload();
 
-      // CALCULATE BUFFERBLOAT GRADE
       let grade = 'N/A';
-      if (idlePing > 0 && loadedDownloadPing !== null && loadedUploadPing !== null) {
+      if (idlePing !== null && loadedDownloadPing !== null && loadedUploadPing !== null) {
           const downloadSpike = Math.max(0, loadedDownloadPing - idlePing);
           const uploadSpike = Math.max(0, loadedUploadPing - idlePing);
           const maxSpike = Math.max(downloadSpike, uploadSpike);
@@ -476,7 +432,6 @@ export default function Home() {
         return newArr;
       });
       
-      // Auto-save to cloud if logged in (without image for speed)
       if (session) {
          fetch(`${HOST}/api/results`, {
              method: 'POST',
@@ -490,13 +445,13 @@ export default function Home() {
                  isp: testRecord.isp,
                  server: testRecord.server,
                  bufferbloatGrade: grade,
-                 userId: session.user?.id
+                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                 userId: (session.user as any)?.id
              })
          }).catch(console.error);
       }
 
       setStatus('done');
-      // Set the final dial value to the calculated average download speed instead of resetting it to zero
       setCurrentValue(parseFloat(finalResultsRef.current.download.toFixed(1)) || 0);
 
     } catch {
@@ -580,14 +535,6 @@ export default function Home() {
     });
   };
 
-  const chartColor = status === 'ping' ? 'var(--accent-ping)' : status === 'download' ? 'var(--accent-cyan)' : 'var(--accent-purple)';
-
-  const getQualityRating = () => {
-    if (downloadSpeed > 300 && ping < 20) return "Excellent for UHD Streaming & Gaming";
-    if (downloadSpeed > 100 && ping < 50) return "Great for HD Streaming & Working";
-    if (downloadSpeed > 25) return "Good for Standard Web Use";
-    return "Poor - Network Optimization Suggested";
-  };
 
   const handleShare = async () => {
     const dashboard = document.getElementById('speedtest-dashboard');

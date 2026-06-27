@@ -33,7 +33,7 @@ const handler = NextAuth({
               return { id: data.user.id, name: data.user.name, email: data.user.email, apiToken: data.token };
             }
             return null;
-        } catch(e) {
+        } catch {
             return null;
         }
       }
@@ -43,6 +43,7 @@ const handler = NextAuth({
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         token.apiToken = (user as any).apiToken;
       }
       return token;
@@ -50,6 +51,7 @@ const handler = NextAuth({
     async session({ session, token }) {
       if (token) {
         session.user.id = token.id as string;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (session as any).apiToken = token.apiToken;
       }
       return session;

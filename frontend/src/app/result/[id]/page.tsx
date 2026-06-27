@@ -1,4 +1,4 @@
-import type { Metadata, ResolvingMetadata } from 'next';
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Activity } from 'lucide-react';
 
@@ -9,8 +9,7 @@ type Props = {
 const HOST = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'; // Match backend port
 
 export async function generateMetadata(
-  { params }: Props,
-  parent: ResolvingMetadata
+  { params }: Props
 ): Promise<Metadata> {
   const res = await fetch(`${HOST}/api/results/${params.id}`, { cache: 'no-store' }).catch(() => null);
   
